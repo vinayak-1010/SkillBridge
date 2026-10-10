@@ -25,11 +25,23 @@ ranked issues, each with a one-line reason.
    prints a JSON array of candidates.
 3. Rank the candidates using the rules in `references/ranking.md` and select
    the top 5.
-4. `finish` with a short list: for each issue give its title, URL and a
-   one-line reason it is a good match.
+4. `finish` with a short list: for each issue give its title, its exact `url`
+   copied verbatim from the script output, and a one-line reason it is a good
+   match. Never omit the URL and never invent or alter it.
+
+## Required answer format
+
+Each line of the final answer MUST follow this exact shape so the URL is
+always present and checkable:
+
+```
+1. <title> - <url> - <one-line reason>
+2. <title> - <url> - <one-line reason>
+...
+```
 
 ## Notes
 
 - If the GitHub API is rate limited, the script accepts an optional token via
   the `GITHUB_TOKEN` environment variable.
-- Keep the final answer compact: 5 issues, one line of reasoning each.
+- Keep the final answer compact: 5 issues, one line each, URL included.

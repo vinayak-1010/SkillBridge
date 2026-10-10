@@ -21,13 +21,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+web = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
 
 [project.scripts]
 skillbridge = "skillbridge.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/your-org/skillbridge"
-Repository = "https://github.com/your-org/skillbridge"
+Homepage = "https://github.com/vinayak-1010/SkillBridge"
+Repository = "https://github.com/vinayak-1010/SkillBridge"
 
 [tool.setuptools.packages.find]
 where = ["src"]

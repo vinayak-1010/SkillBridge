@@ -12,6 +12,8 @@ venv/
 .cache/
 *.jsonl.trace
 trace.jsonl
+demo-trace*.jsonl
+bench-run.txt
 
 # Tooling
 .pytest_cache/

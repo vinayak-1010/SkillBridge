@@ -11,6 +11,11 @@ compares the same model with and without the harness.
 
 No GPU. No paid API. Runs on a laptop.
 
+**Live demo (frontend):** https://vinayak-1010.github.io/SkillBridge/
+*(the page is a static UI; it drives a SkillBridge API that runs locally on
+whoever's machine has Ollama — see [Web demo](#web-demo) for why, and how to
+point it at your own machine in under a minute.)*
+
 ---
 
 ## Why
@@ -23,18 +28,26 @@ model. The harness around the model takes over reliability.
 ## 60-second quickstart
 
 ```bash
-# 1. Install Ollama and pull a small open-weight model
-ollama pull qwen3:4b         # Apache-2.0 weights; or: ollama pull phi4-mini
+# 1. Install Ollama: https://ollama.com/download
+# 2. Pull a small open-weight model (Apache-2.0 weights)
+ollama pull qwen3:1.7b       # recommended default: fast on CPU
+# ollama pull qwen3:4b       # larger alternative, needs more CPU/RAM
+# ollama pull phi4-mini      # MIT-licensed alternative
 
-# 2. Install SkillBridge
+# 3. Install SkillBridge
+python -m venv .venv && .venv\Scripts\activate   # Windows
+# source .venv/bin/activate                      # macOS / Linux
 pip install -e .
 
-# 3. See the skills, then run a task
+# 4. See the skills, then run a task live
 skillbridge list
-skillbridge run "find me beginner issues in Java"
+skillbridge run "find me beginner issues in Java" --model qwen3:1.7b
 ```
 
 Network is needed only for the GitHub API the skills call. No GPU required.
+On a CPU-only laptop, `qwen3:1.7b` finishes a task in well under a minute;
+`qwen3:4b` works too but is noticeably slower per step (see
+[Risks and Fallbacks](SPEC.md) for the sizing tradeoff).
 
 ## Architecture
 
@@ -73,8 +86,46 @@ Every action the model emits is a single JSON object enforced by a schema:
 | `skillbridge run "<task>"` | Run a task end to end. |
 | `skillbridge validate` | Check skills against the Agent Skills standard. |
 
-Useful flags for `run`: `--model phi4-mini`, `--trace run.jsonl`,
+Useful flags for `run`: `--model qwen3:4b`, `--trace run.jsonl`,
 `--max-steps 8`, `--budget 6000`.
+
+> **Verified live** (CPU-only laptop, `qwen3:1.7b`, no GPU): all three skills
+> below have been run end to end against the real Ollama server and the real
+> GitHub API, producing correct, grounded answers with live issue URLs,
+> an accurate repository map, and an honest "not found" when a repo has no
+> CONTRIBUTING file. See `bench/RESULTS.md` for the quantitative comparison.
+
+## Web demo
+
+A small browser UI (`web/frontend/`) sits on top of a FastAPI wrapper
+(`web/api/`) around the exact same `catalog` / `router` / `loop` code the CLI
+uses — the API adds no new agent logic. It lists skills, runs a task, and
+streams the live trace (route → action → observation → verify → finish) to
+the page as it happens.
+
+**Why the backend isn't "deployed to the cloud":** SkillBridge's entire pitch
+is no GPU and no paid API — the model runs on whoever's machine has Ollama.
+Hosting the API on a cloud box would mean paying for compute or quietly
+reintroducing a hosted model, which contradicts the project. Instead, the
+**frontend** is static-hosted (GitHub Pages) and the **API** runs locally,
+next to Ollama, on your own machine. This is the same tradeoff llama.cpp /
+Ollama's own desktop UIs make.
+
+Run your own API:
+
+```bash
+pip install -e ".[web]"
+uvicorn web.api.main:app --port 8000
+```
+
+Then open the live frontend above and it will try `http://localhost:8000`
+by default (editable in the "API base URL" box). If Ollama and the API are
+both running locally, the page will show "connected · Ollama reachable" and
+you can run a task straight from the browser.
+
+To run the frontend locally instead of using the hosted page, just open
+`web/frontend/index.html` in a browser, or serve the folder with any static
+file server.
 
 ## The three skills
 
@@ -90,8 +141,14 @@ Agent Skills compatible tool, not just SkillBridge.
 
 ## Model and license
 
-- Default model: **qwen3:4b** (Qwen3, Apache-2.0 weights). Alternative:
-  **phi4-mini** (MIT). Always check the current license on the model's page.
+- Recommended model: **qwen3:1.7b** (Qwen3, Apache-2.0 weights) — fast enough
+  for live use on a CPU-only laptop. The larger **qwen3:4b** (same license)
+  also works, just slower per step on CPU. Alternative: **phi4-mini** (MIT).
+  Always check the current license on the model's page.
+- SkillBridge disables the model's hidden "thinking" mode for action steps
+  (`think: false` in the Ollama request) so every step produces the
+  schema-constrained JSON action directly, instead of spending the token
+  budget on an invisible reasoning trace.
 - SkillBridge itself is **Apache-2.0** (see [LICENSE](LICENSE)).
 - The backend sits behind an `LLMBackend` interface, so a llama.cpp server can
   be swapped in. Optional AWS deployment notes live in `docs/aws.md`.
@@ -102,7 +159,7 @@ Agent Skills compatible tool, not just SkillBridge.
 ~10 tasks, reporting success rate and average tokens.
 
 ```bash
-python bench/run_bench.py --model qwen3:4b
+python bench/run_bench.py --model qwen3:1.7b
 ```
 
 Results are written to [bench/RESULTS.md](bench/RESULTS.md). We report them
@@ -129,11 +186,15 @@ skillbridge/
   skills/
     contrib-scout/   pr-prep/   repo-onboarding/
   bench/   tasks.jsonl  run_bench.py  RESULTS.md
+  web/
+    api/        main.py (FastAPI wrapper, no new agent logic)
+    frontend/   index.html  styles.css  app.js (static, no build step)
   tests/
   .github/workflows/ci.yml
 ```
 
 ## Out of scope
 
-Web UI, fine-tuning, multi-agent orchestration, paid APIs, and vector
-databases. A VS Code extension or web page could be added later as a bonus.
+Fine-tuning, multi-agent orchestration, paid APIs, and vector databases.
+A bonus browser UI (`web/`) is included; it is a thin client over the same
+CLI logic, not a new product surface.

@@ -60,6 +60,12 @@ class OllamaBackend:
             "model": self.model,
             "messages": messages,
             "stream": False,
+            # Hybrid-reasoning models (e.g. Qwen3) support a "think" toggle.
+            # The harness needs one constrained JSON action per step, not a
+            # hidden reasoning trace, so thinking is disabled: without this a
+            # thinking model can spend the entire token budget on invisible
+            # reasoning and return empty content, which looks like a hang.
+            "think": False,
             "options": {"num_predict": max_tokens, "temperature": 0},
         }
         # Ollama accepts a JSON schema object in `format` for constrained decoding.
@@ -71,7 +77,14 @@ class OllamaBackend:
         resp.raise_for_status()
         data = resp.json()
 
-        text = data.get("message", {}).get("content", "")
+        message = data.get("message", {})
+        text = message.get("content", "") or ""
+        # Some models put reasoning in a separate "thinking" field even with
+        # think=False honored for content; fall back to it only if content
+        # is empty so we never silently return nothing.
+        if not text.strip():
+            text = message.get("thinking", "") or text
+
         tokens = int(data.get("eval_count", 0)) + int(data.get("prompt_eval_count", 0))
         if tokens == 0:
             # Fall back to a rough estimate when the server omits counts.

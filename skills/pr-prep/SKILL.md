@@ -21,13 +21,24 @@ how that project expects contributions to be submitted.
 2. The script fetches, where present: CONTRIBUTING, the PR template, any commit
    convention hints, and the test command from common config files. It prints a
    JSON object summarising what it found.
-3. `finish` with a checklist the user can follow before opening their PR. Only
-   include items the repository actually documents; note anything that was not
-   found so the user knows what is unspecified.
+3. `finish` with a checklist the user can follow before opening their PR.
+
+## Grounding rule (critical)
+
+Base every line strictly on the script's JSON output. Never say a guide,
+template, or convention exists unless its `found` field is `true` (or its
+value is non-null). If `contributing.found` is `false`, do not tell the user
+to "read CONTRIBUTING" — instead say the repository has no CONTRIBUTING file
+and that unwritten norms (open an issue first, keep PRs small) apply. The
+same rule applies to `pr_template.found` and `commit_convention`: report
+"not specified" rather than inventing a convention.
 
 ## Checklist shape
 
-- Read CONTRIBUTING (link it).
-- Follow the PR template (summarise the sections).
-- Match the commit convention (state it).
-- Run the test command (give the exact command).
+For each item, follow this pattern:
+- If found/present: state it concretely (link the path, name the command).
+- If not found/null: say so explicitly, for example "No CONTRIBUTING file
+  found; no documented process beyond opening a PR."
+
+Items to cover: CONTRIBUTING guide, PR template, commit convention, test
+command.

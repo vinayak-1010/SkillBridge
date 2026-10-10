@@ -26,3 +26,6 @@ understand its shape fast before diving in.
    - the build command and the test command.
 
 Keep it to one screen. Prefer concrete file paths and commands over prose.
+Never copy the script's raw `layout` list verbatim into the answer: group
+and summarize it (for example "docs/ (40 files)") instead of listing every
+entry. If `layout_truncated` is true, say the list was shortened.

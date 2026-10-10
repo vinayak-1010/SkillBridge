@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SkillBridge — local agent harness for small open-weight models</title>
+<meta name="description" content="A reliable local agent harness for small open-weight models, run through Ollama." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌉</text></svg>" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">🌉</span>
+    <div>
+      <h1>SkillBridge</h1>
+      <p class="tagline">A reliable local agent harness for small open-weight models</p>
+    </div>
+  </div>
+  <a class="gh-link" href="https://github.com/vinayak-1010/SkillBridge" target="_blank" rel="noopener">
+    View on GitHub ↗
+  </a>
+</header>
+
+<main>
+  <section class="panel intro">
+    <p>
+      SkillBridge lets tiny open-weight models (1-4B parameters, run locally
+      through <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>)
+      execute standard Agent Skills reliably — constrained decoding, progressive
+      skill loading, and a verify-and-retry loop. No GPU. No paid API.
+    </p>
+    <p class="note">
+      This page is a static frontend. It talks to a SkillBridge API that runs
+      <strong>locally on your machine</strong>, next to Ollama — nothing here
+      is a hosted cloud model. See
+      <a href="https://github.com/vinayak-1010/SkillBridge#running-the-web-demo" target="_blank" rel="noopener">
+        running the web demo
+      </a> to start your own API.
+    </p>
+  </section>
+
+  <section class="panel connection">
+    <label for="apiUrl">API base URL</label>
+    <div class="row">
+      <input id="apiUrl" type="text" value="http://localhost:8000" spellcheck="false" />
+      <button id="connectBtn" class="btn secondary">Connect</button>
+      <span id="statusDot" class="status-dot unknown" title="connection status"></span>
+      <span id="statusText" class="status-text">not connected</span>
+    </div>
+  </section>
+
+  <section class="panel skills">
+    <h2>Available skills</h2>
+    <div id="skillList" class="skill-list">
+      <p class="placeholder">Connect to the API to load the skill catalog.</p>
+    </div>
+  </section>
+
+  <section class="panel run">
+    <h2>Run a task</h2>
+    <div class="field">
+      <label for="taskInput">Task</label>
+      <input id="taskInput" type="text" placeholder="e.g. find me beginner issues in Java" />
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="modelInput">Model</label>
+        <input id="modelInput" type="text" value="qwen3:1.7b" />
+      </div>
+      <div class="field">
+        <label for="maxStepsInput">Max steps</label>
+        <input id="maxStepsInput" type="number" value="8" min="1" max="20" />
+      </div>
+      <div class="field">
+        <label for="budgetInput">Token budget</label>
+        <input id="budgetInput" type="number" value="6000" min="500" step="500" />
+      </div>
+    </div>
+    <button id="runBtn" class="btn primary">Run task</button>
+    <span id="runSpinner" class="spinner hidden"></span>
+  </section>
+
+  <section class="panel output">
+    <h2>Live trace</h2>
+    <div id="traceLog" class="trace-log">
+      <p class="placeholder">Run a task to see the harness route, act, verify and finish, step by step.</p>
+    </div>
+  </section>
+
+  <section class="panel output">
+    <h2>Final answer</h2>
+    <div id="finalAnswer" class="final-answer">
+      <p class="placeholder">No answer yet.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>
+    SkillBridge is Apache-2.0 licensed. Source:
+    <a href="https://github.com/vinayak-1010/SkillBridge" target="_blank" rel="noopener">github.com/vinayak-1010/SkillBridge</a>
+  </p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

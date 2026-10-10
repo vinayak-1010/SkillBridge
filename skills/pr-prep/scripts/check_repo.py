@@ -13,22 +13,40 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 API = "https://api.github.com"
 RAW = "https://raw.githubusercontent.com"
 USER_AGENT = "SkillBridge-pr-prep/0.1"
 
+# Per-request timeout for raw.githubusercontent.com fetches. Multiple
+# candidate paths are checked concurrently (see _first_present_concurrent and
+# _guess_test_command) so total wall time stays close to this single-request
+# timeout rather than the sum of every candidate, keeping the script inside
+# the harness's 10s sandbox cap.
+RAW_FETCH_TIMEOUT = 4
+
 CONTRIBUTING_PATHS = [
     "CONTRIBUTING.md",
+    "CONTRIBUTING.rst",
     ".github/CONTRIBUTING.md",
+    ".github/CONTRIBUTING.rst",
     "docs/CONTRIBUTING.md",
+    "docs/CONTRIBUTING.rst",
 ]
 PR_TEMPLATE_PATHS = [
     ".github/pull_request_template.md",
     ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/pull_request_template.rst",
     "docs/pull_request_template.md",
+]
+TEST_MARKERS = [
+    ("pyproject.toml", "pytest"),
+    ("tox.ini", "tox"),
+    ("Makefile", "make test"),
+    ("Cargo.toml", "cargo test"),
+    ("go.mod", "go test ./..."),
 ]
 
 
@@ -40,10 +58,10 @@ def _headers() -> dict:
     return headers
 
 
-def _fetch_text(url: str) -> str | None:
+def _fetch_text(url: str, timeout: int = RAW_FETCH_TIMEOUT) -> str | None:
     try:
         req = urllib.request.Request(url, headers=_headers())
-        with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
             if resp.status != 200:
                 return None
             return resp.read().decode("utf-8", errors="replace")
@@ -70,41 +88,45 @@ def _normalize_repo(repo: str) -> str:
 
 
 def _default_branch(repo: str) -> str:
-    data = _fetch_json(f"{API}/repos/{repo}")
+    # A single metadata call to api.github.com; give it a little more
+    # headroom than the bulk raw-file probes below.
+    data = _fetch_json(f"{API}/repos/{repo}", timeout=8)
     if isinstance(data, dict) and data.get("default_branch"):
         return str(data["default_branch"])
     return "main"
 
 
+def _fetch_json(url: str, timeout: int = RAW_FETCH_TIMEOUT) -> dict | list | None:
+    text = _fetch_text(url, timeout=timeout)
+    if text is None:
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
+
+
+def _fetch_all(repo: str, branch: str, paths: list[str]) -> dict[str, str | None]:
+    """Fetch every candidate path concurrently; returns {path: content|None}.
+
+    Fetching candidates in parallel instead of one-after-another keeps the
+    total wall time close to a single request's timeout, which is what lets
+    this script finish inside the harness's 10s sandbox cap even when
+    several candidate paths must be probed.
+    """
+    with ThreadPoolExecutor(max_workers=max(1, len(paths))) as pool:
+        futures = {
+            pool.submit(_fetch_text, f"{RAW}/{repo}/{branch}/{p}"): p for p in paths
+        }
+        return {futures[f]: f.result() for f in futures}
+
+
 def _first_present(repo: str, branch: str, paths: list[str]) -> tuple[str | None, str | None]:
-    for path in paths:
-        text = _fetch_text(f"{RAW}/{repo}/{branch}/{path}")
-        if text:
-            return path, text
+    results = _fetch_all(repo, branch, paths)
+    for path in paths:  # preserve priority order among candidates that exist
+        if results.get(path):
+            return path, results[path]
     return None, None
-
-
-def _guess_test_command(repo: str, branch: str) -> str | None:
-    # package.json scripts.test
-    pkg = _fetch_text(f"{RAW}/{repo}/{branch}/package.json")
-    if pkg:
-        try:
-            scripts = json.loads(pkg).get("scripts", {})
-            if "test" in scripts:
-                return f"npm test  ({scripts['test']})"
-        except json.JSONDecodeError:
-            pass
-    # Common Python / build markers
-    for marker, cmd in (
-        ("pyproject.toml", "pytest"),
-        ("tox.ini", "tox"),
-        ("Makefile", "make test"),
-        ("Cargo.toml", "cargo test"),
-        ("go.mod", "go test ./..."),
-    ):
-        if _fetch_text(f"{RAW}/{repo}/{branch}/{marker}"):
-            return cmd
-    return None
 
 
 def check(repo: str) -> dict:
@@ -113,6 +135,26 @@ def check(repo: str) -> dict:
 
     contrib_path, contrib_text = _first_present(repo, branch, CONTRIBUTING_PATHS)
     pr_path, pr_text = _first_present(repo, branch, PR_TEMPLATE_PATHS)
+
+    # Test command: probe package.json plus every marker in TEST_MARKERS,
+    # all concurrently.
+    test_candidates = ["package.json"] + [m for m, _cmd in TEST_MARKERS]
+    test_results = _fetch_all(repo, branch, test_candidates)
+
+    test_command = None
+    pkg = test_results.get("package.json")
+    if pkg:
+        try:
+            scripts = json.loads(pkg).get("scripts", {})
+            if "test" in scripts:
+                test_command = f"npm test  ({scripts['test']})"
+        except json.JSONDecodeError:
+            pass
+    if test_command is None:
+        for marker, cmd in TEST_MARKERS:
+            if test_results.get(marker):
+                test_command = cmd
+                break
 
     commit_convention = None
     if contrib_text:
@@ -137,7 +179,7 @@ def check(repo: str) -> dict:
             "excerpt": (pr_text or "")[:600] if pr_text else None,
         },
         "commit_convention": commit_convention,
-        "test_command": _guess_test_command(repo, branch),
+        "test_command": test_command,
     }
 
 
