@@ -11,10 +11,17 @@ compares the same model with and without the harness.
 
 No GPU. No paid API. Runs on a laptop.
 
-**Live demo (frontend):** https://vinayak-1010.github.io/SkillBridge/
-*(the page is a static UI; it drives a SkillBridge API that runs locally on
-whoever's machine has Ollama — see [Web demo](#web-demo) for why, and how to
-point it at your own machine in under a minute.)*
+**Live demo:** https://vinayak-1010.github.io/SkillBridge/
+*(static frontend on GitHub Pages, pointed at a SkillBridge API running
+locally on the author's laptop next to Ollama via a Cloudflare Tunnel — see
+[Web demo](#web-demo) for why, and how to point it at your own machine
+instead.)*
+
+**For judges:** open the live demo link above, click **Connect**, wait for
+"connected · Ollama reachable", then type a task (for example `find me
+beginner issues in Java`) and press **Run task**. You'll see the harness
+route to a skill, call a real script against the live GitHub API, and finish
+with a grounded answer, streamed step by step in the Live trace panel.
 
 ---
 
@@ -111,6 +118,12 @@ reintroducing a hosted model, which contradicts the project. Instead, the
 next to Ollama, on your own machine. This is the same tradeoff llama.cpp /
 Ollama's own desktop UIs make.
 
+**Live API during judging:** the hosted frontend's "API base URL" box
+defaults to a Cloudflare Tunnel into the author's laptop:
+https://manager-altered-couples-model.trycloudflare.com — live only while
+that machine is running the demo. If the page shows "cannot reach API", the
+demo session has ended; swap the URL for your own API (below) instead.
+
 Run your own API:
 
 ```bash
@@ -118,10 +131,17 @@ pip install -e ".[web]"
 uvicorn web.api.main:app --port 8000
 ```
 
-Then open the live frontend above and it will try `http://localhost:8000`
-by default (editable in the "API base URL" box). If Ollama and the API are
-both running locally, the page will show "connected · Ollama reachable" and
-you can run a task straight from the browser.
+Then open the live frontend above, replace the API base URL with
+`http://localhost:8000`, and hit Connect. If Ollama and the API are both
+running locally, the page will show "connected · Ollama reachable" and you
+can run a task straight from the browser.
+
+To expose your own local API to other devices (e.g. for a live demo), run
+a tunnel in a second terminal: `cloudflared tunnel --url http://localhost:8000`
+([install cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)),
+then put the printed `https://*.trycloudflare.com` URL into the API base URL
+box. Quick tunnels are free but ephemeral — a new URL is issued every time
+`cloudflared` restarts.
 
 To run the frontend locally instead of using the hosted page, just open
 `web/frontend/index.html` in a browser, or serve the folder with any static
