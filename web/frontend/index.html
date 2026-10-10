@@ -33,22 +33,29 @@
     </p>
     <p class="note">
       This page is a static frontend. It talks to a SkillBridge API that runs
-      <strong>locally on your machine</strong>, next to Ollama — nothing here
-      is a hosted cloud model. See
+      <strong>locally on a laptop</strong>, next to Ollama — nothing here is a
+      hosted cloud model. The box below defaults to a live tunnel into the
+      author's machine, active during the judging window. See
       <a href="https://github.com/vinayak-1010/SkillBridge#running-the-web-demo" target="_blank" rel="noopener">
         running the web demo
-      </a> to start your own API.
+      </a> to point this page at your own machine instead.
     </p>
   </section>
 
   <section class="panel connection">
     <label for="apiUrl">API base URL</label>
     <div class="row">
-      <input id="apiUrl" type="text" value="http://localhost:8000" spellcheck="false" />
+      <input id="apiUrl" type="text" value="https://manager-altered-couples-model.trycloudflare.com" spellcheck="false" />
       <button id="connectBtn" class="btn secondary">Connect</button>
       <span id="statusDot" class="status-dot unknown" title="connection status"></span>
       <span id="statusText" class="status-text">not connected</span>
     </div>
+    <p class="note" style="margin-top:10px;">
+      This URL is a temporary tunnel, only live while the demo machine is
+      running it. If it shows "cannot reach API", the demo session has ended
+      — replace it with <code>http://localhost:8000</code> and run your own
+      API locally instead (see Web demo in the README).
+    </p>
   </section>
 
   <section class="panel skills">
