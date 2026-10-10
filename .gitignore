@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# SkillBridge runtime
+.cache/
+*.jsonl.trace
+trace.jsonl
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+.venv/

@@ -1,0 +1,10 @@
+{"id": "t01", "skill": "contrib-scout", "prompt": "Find me beginner issues in Python", "check": {"type": "regex", "pattern": "https://github.com/\\S+/issues/\\d+", "min_count": 1}}
+{"id": "t02", "skill": "contrib-scout", "prompt": "Find good first issues in Java for someone interested in CLI tools", "check": {"type": "regex", "pattern": "https://github.com/\\S+/issues/\\d+", "min_count": 1}}
+{"id": "t03", "skill": "contrib-scout", "prompt": "Suggest hacktoberfest issues in JavaScript", "check": {"type": "regex", "pattern": "https://github.com/\\S+/issues/\\d+", "min_count": 1}}
+{"id": "t04", "skill": "pr-prep", "prompt": "I want to open a PR on pallets/flask, prepare a checklist", "check": {"type": "contains_any", "any": ["CONTRIBUTING", "test", "checklist", "pytest"]}}
+{"id": "t05", "skill": "pr-prep", "prompt": "Prepare me to contribute to tiangolo/typer", "check": {"type": "contains_any", "any": ["CONTRIBUTING", "test", "checklist"]}}
+{"id": "t06", "skill": "pr-prep", "prompt": "What does psf/requests expect before I open a pull request?", "check": {"type": "contains_any", "any": ["CONTRIBUTING", "test", "checklist"]}}
+{"id": "t07", "skill": "repo-onboarding", "prompt": "Give me a one-page map of pallets/click", "check": {"type": "contains_any", "any": ["entry", "test", "build", "src", "layout"]}}
+{"id": "t08", "skill": "repo-onboarding", "prompt": "Help me get oriented in the fastapi/fastapi repository", "check": {"type": "contains_any", "any": ["entry", "test", "build", "layout"]}}
+{"id": "t09", "skill": "repo-onboarding", "prompt": "Map the structure of encode/httpx", "check": {"type": "contains_any", "any": ["entry", "test", "build", "layout"]}}
+{"id": "t10", "skill": "contrib-scout", "prompt": "Find beginner-friendly issues in Go", "check": {"type": "regex", "pattern": "https://github.com/\\S+/issues/\\d+", "min_count": 1}}
